@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard — Smart Medicine Reminder</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">Smart Medicine Reminder</div>
+    <ul class="nav-list">
+      <li><a href="dashboard.html" class="active">Dashboard</a></li>
+      <li><a href="medicines.html">Medicines</a></li>
+      <li><a href="#">Schedules</a></li>
+      <li><a href="#">Reminders</a></li>
+      <li><a href="#">Notifications</a></li>
+      <li><a href="#">Caregivers</a></li>
+      <li><a href="#">Inventory</a></li>
+    </ul>
+    <button class="sidebar-logout" id="logoutBtn">Logout</button>
+  </aside>
+
+  <main class="main">
+    <div class="main-header">
+      <h1 id="welcomeMsg">Welcome!</h1>
+      <p>Here's what's happening with your medicines today.</p>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Medicines</div>
+        <div class="stat-value" id="totalMedicines">–</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Today's Medicines</div>
+        <div class="stat-value" id="todayMedicines">–</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Today's Schedule</h2>
+      <ul class="list-simple" id="todayList">
+        <li>Loading…</li>
+      </ul>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+<script src="js/api.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

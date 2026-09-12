@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Smart Medicine Reminder</title>
+<script>
+  // Entry point: send the visitor to the right place based on login state.
+  const token = localStorage.getItem("token");
+  window.location.replace(token ? "dashboard.html" : "login.html");
+</script>
+</head>
+<body></body>
+</html>

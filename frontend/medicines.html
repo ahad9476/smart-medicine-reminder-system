@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Medicines — Smart Medicine Reminder</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">Smart Medicine Reminder</div>
+    <ul class="nav-list">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="medicines.html" class="active">Medicines</a></li>
+      <li><a href="#">Schedules</a></li>
+      <li><a href="#">Reminders</a></li>
+      <li><a href="#">Notifications</a></li>
+      <li><a href="#">Caregivers</a></li>
+      <li><a href="#">Inventory</a></li>
+    </ul>
+    <button class="sidebar-logout" id="logoutBtn">Logout</button>
+  </aside>
+
+  <main class="main">
+    <div class="main-header">
+      <h1>Medicines</h1>
+      <p>Add, edit, and remove medicines in your list.</p>
+    </div>
+
+    <div class="panel">
+      <div class="toolbar">
+        <h2 style="margin:0;">All Medicines</h2>
+        <button class="btn-add" id="openAddModal">+ Add Medicine</button>
+      </div>
+
+      <table class="med-table">
+        <thead>
+          <tr>
+            <th>Medicine Name</th>
+            <th>Dosage</th>
+            <th>Description</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="medicineRows">
+          <tr><td colspan="4" class="empty-state">Loading medicines…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- Add / Edit Modal (shared by both actions) -->
+<div class="modal-backdrop" id="medicineModalBackdrop">
+  <div class="modal">
+    <h2 id="modalTitle">Add Medicine</h2>
+    <form id="medicineForm">
+      <input type="hidden" id="medicineId" />
+      <div class="field">
+        <label for="medName">Medicine Name</label>
+        <input type="text" id="medName" required placeholder="e.g. Napa" />
+      </div>
+      <div class="field">
+        <label for="medDosage">Dosage</label>
+        <input type="text" id="medDosage" required placeholder="e.g. 500mg" />
+      </div>
+      <div class="field">
+        <label for="medDescription">Description</label>
+        <input type="text" id="medDescription" placeholder="e.g. Painkiller" />
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancelModal">Cancel</button>
+        <button type="submit" class="btn-primary" id="saveMedicineBtn" style="width:auto; padding:0.55rem 1.2rem;">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="js/api.js"></script>
+<script src="js/medicines.js"></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Register — Smart Medicine Reminder</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="auth-page">
+
+  <div class="auth-card">
+    <div class="auth-brand">SMART MEDICINE REMINDER</div>
+    <h1>Create your account</h1>
+
+    <div id="registerError" class="form-error"></div>
+
+    <form id="registerForm" novalidate>
+      <div class="field">
+        <label for="name">Full name</label>
+        <input type="text" id="name" name="name" required placeholder="Ahad Islam" />
+      </div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required placeholder="you@example.com" />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required placeholder="••••••••" />
+      </div>
+
+      <div class="field">
+        <label for="role">Role</label>
+        <select id="role" name="role" style="width:100%; padding:0.65rem 0.75rem; border:1px solid #cfd8d7; border-radius:8px;">
+          <option value="patient">Patient</option>
+          <option value="caregiver">Caregiver</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn-primary" id="registerBtn">Create Account</button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a href="login.html">Log in</a>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="js/api.js"></script>
+  <script>
+    const form = document.getElementById("registerForm");
+    const errorBox = document.getElementById("registerError");
+    const btn = document.getElementById("registerBtn");
+
+    function showError(msg) {
+      errorBox.textContent = msg;
+      errorBox.classList.add("visible");
+    }
+    function hideError() {
+      errorBox.classList.remove("visible");
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      hideError();
+      btn.disabled = true;
+      btn.textContent = "Creating account…";
+
+      const payload = {
+        name: document.getElementById("name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        password: document.getElementById("password").value,
+        role: document.getElementById("role").value,
+      };
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          showError(data.message || "Could not create account. Try again.");
+          return;
+        }
+
+        window.location.href = "login.html";
+      } catch (err) {
+        showError("Can't reach the server. Check your connection and try again.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Create Account";
+      }
+    });
+  </script>
+</body>
+</html>
