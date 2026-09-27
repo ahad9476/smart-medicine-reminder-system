@@ -15,10 +15,9 @@ async function loadDashboard() {
     showToast(err.message, true);
   }
 
-  // Today's schedule: separate endpoint (Member 2's part).
-  // Coded defensively so the dashboard still works before that route exists.
+  // Today's schedule, joined with today's compliance status.
   try {
-    const today = await apiFetch("/api/schedules/today");
+    const today = await apiFetch(`/api/schedules/today?user_id=${user.user_id}`);
     renderTodayList(today);
     document.getElementById("todayMedicines").textContent = today.length;
   } catch (err) {
@@ -38,12 +37,62 @@ function renderTodayList(items) {
 
   items.forEach((item) => {
     const li = document.createElement("li");
+    li.dataset.scheduleId = item.schedule_id;
+    li.dataset.medicineId = item.medicine_id;
+
+    const isPending = item.status === "pending";
+
     li.innerHTML = `
       <span>${item.medicine_name || item.name} — ${item.time || ""}</span>
       <span class="tag">${item.status || "pending"}</span>
+      ${
+        isPending
+          ? `<span class="dose-actions">
+               <button class="btn-link take-btn">Mark Taken</button>
+               <button class="btn-link danger skip-btn">Skip</button>
+             </span>`
+          : ""
+      }
     `;
     list.appendChild(li);
   });
+
+  list.querySelectorAll(".take-btn").forEach((btn) =>
+    btn.addEventListener("click", (e) => markDose(e.target.closest("li"), "taken"))
+  );
+  list.querySelectorAll(".skip-btn").forEach((btn) =>
+    btn.addEventListener("click", (e) => markDose(e.target.closest("li"), "skipped"))
+  );
+}
+
+async function markDose(li, status) {
+  const schedule_id = li.dataset.scheduleId;
+  const medicine_id = li.dataset.medicineId;
+
+  try {
+    const result = await apiFetch("/api/compliance/mark", {
+      method: "POST",
+      body: JSON.stringify({
+        schedule_id,
+        medicine_id,
+        user_id: user.user_id,
+        status,
+      }),
+    });
+
+    showToast(result.message || "Updated.");
+
+    if (result.inventory && result.inventory.notified) {
+      showToast(
+        `Heads up: only ${result.inventory.quantity} dose(s) left for this medicine.`,
+        true
+      );
+    }
+
+    loadDashboard();
+  } catch (err) {
+    showToast(err.message, true);
+  }
 }
 
 loadDashboard();

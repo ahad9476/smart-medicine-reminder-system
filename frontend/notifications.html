@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard — Smart Medicine Reminder</title>
+<title>Notifications — Smart Medicine Reminder</title>
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -12,11 +12,11 @@
   <aside class="sidebar">
     <div class="sidebar-brand">Smart Medicine Reminder</div>
     <ul class="nav-list">
-      <li><a href="dashboard.html" class="active">Dashboard</a></li>
+      <li><a href="dashboard.html">Dashboard</a></li>
       <li><a href="medicines.html">Medicines</a></li>
       <li><a href="schedules.html">Schedules</a></li>
       <li><a href="#">Reminders</a></li>
-      <li><a href="notifications.html">Notifications</a></li>
+      <li><a href="notifications.html" class="active">Notifications</a></li>
       <li><a href="#">Caregivers</a></li>
       <li><a href="inventory.html">Inventory</a></li>
     </ul>
@@ -25,24 +25,12 @@
 
   <main class="main">
     <div class="main-header">
-      <h1 id="welcomeMsg">Welcome!</h1>
-      <p>Here's what's happening with your medicines today.</p>
-    </div>
-
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-label">Total Medicines</div>
-        <div class="stat-value" id="totalMedicines">–</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Today's Medicines</div>
-        <div class="stat-value" id="todayMedicines">–</div>
-      </div>
+      <h1>Notifications</h1>
+      <p>Missed dose and low stock alerts, newest first.</p>
     </div>
 
     <div class="panel">
-      <h2>Today's Schedule</h2>
-      <ul class="list-simple" id="todayList">
+      <ul class="list-simple" id="notificationList">
         <li>Loading…</li>
       </ul>
     </div>
@@ -51,6 +39,6 @@
 
 <div id="toast"></div>
 <script src="js/api.js"></script>
-<script src="js/dashboard.js"></script>
+<script src="js/notifications.js"></script>
 </body>
 </html>

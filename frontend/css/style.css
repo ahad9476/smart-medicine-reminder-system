@@ -252,6 +252,18 @@ a:focus-visible {
   color: #fff;
 }
 
+/* Generic status badge, used in tables (inventory, notifications) */
+.status-tag {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--secondary);
+  color: #fff;
+  white-space: nowrap;
+}
+.status-tag.low { background: var(--danger); }
+.status-tag.ok { background: #3a9d63; }
+
 /* ---------- Medicines page ---------- */
 .toolbar {
   display: flex;

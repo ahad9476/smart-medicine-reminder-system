@@ -3,9 +3,14 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 11, 2026 at 06:10 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
+--
+-- Updated for schema v2: `dosages` removed, dosage/instructions folded into
+-- `schedules`, `medication_compliance` added, `medicine_inventory` prepped
+-- for auto-decrement + low-stock notifications.
+-- See migration_v2_schedules_compliance.sql if upgrading an existing DB
+-- instead of importing this fresh.
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -50,19 +55,6 @@ CREATE TABLE `caregiver_assignments` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `dosages`
---
-
-CREATE TABLE `dosages` (
-  `dosage_id` int(11) NOT NULL,
-  `medicine_id` int(11) NOT NULL,
-  `dosage_amount` varchar(50) DEFAULT NULL,
-  `instructions` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `medicines`
 --
 
@@ -95,7 +87,8 @@ CREATE TABLE `medicine_inventory` (
   `inventory_id` int(11) NOT NULL,
   `medicine_id` int(11) NOT NULL,
   `quantity` int(11) DEFAULT 0,
-  `expiry_date` date DEFAULT NULL
+  `expiry_date` date DEFAULT NULL,
+  `low_stock_notified` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -109,6 +102,26 @@ CREATE TABLE `medicine_refills` (
   `medicine_id` int(11) NOT NULL,
   `quantity_added` int(11) NOT NULL,
   `refill_date` date DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `medication_compliance`
+--
+
+CREATE TABLE `medication_compliance` (
+  `compliance_id` int(11) NOT NULL,
+  `schedule_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `medicine_id` int(11) NOT NULL,
+  `scheduled_date` date NOT NULL,
+  `scheduled_time` time NOT NULL,
+  `status` enum('taken','missed','skipped') NOT NULL DEFAULT 'missed',
+  `taken_at` timestamp NULL DEFAULT NULL,
+  `notified` tinyint(1) NOT NULL DEFAULT 0,
+  `notes` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -169,7 +182,9 @@ CREATE TABLE `schedules` (
   `user_id` int(11) NOT NULL,
   `medicine_id` int(11) NOT NULL,
   `schedule_time` time NOT NULL,
-  `frequency` varchar(50) DEFAULT NULL
+  `frequency` varchar(50) DEFAULT NULL,
+  `dosage_amount` varchar(50) DEFAULT NULL,
+  `instructions` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -211,87 +226,53 @@ CREATE TABLE `user_notification_settings` (
 -- Indexes for dumped tables
 --
 
---
--- Indexes for table `caregivers`
---
 ALTER TABLE `caregivers`
   ADD PRIMARY KEY (`caregiver_id`);
 
---
--- Indexes for table `caregiver_assignments`
---
 ALTER TABLE `caregiver_assignments`
   ADD PRIMARY KEY (`assignment_id`),
   ADD KEY `user_id` (`user_id`),
   ADD KEY `caregiver_id` (`caregiver_id`);
 
---
--- Indexes for table `dosages`
---
-ALTER TABLE `dosages`
-  ADD PRIMARY KEY (`dosage_id`),
-  ADD KEY `medicine_id` (`medicine_id`);
-
---
--- Indexes for table `medicines`
---
 ALTER TABLE `medicines`
   ADD PRIMARY KEY (`medicine_id`),
   ADD KEY `user_id` (`user_id`);
 
---
--- Indexes for table `medicine_inventory`
---
 ALTER TABLE `medicine_inventory`
   ADD PRIMARY KEY (`inventory_id`),
-  ADD KEY `medicine_id` (`medicine_id`);
+  ADD UNIQUE KEY `medicine_id_unique` (`medicine_id`);
 
---
--- Indexes for table `medicine_refills`
---
 ALTER TABLE `medicine_refills`
   ADD PRIMARY KEY (`refill_id`),
   ADD KEY `medicine_id` (`medicine_id`);
 
---
--- Indexes for table `notifications`
---
+ALTER TABLE `medication_compliance`
+  ADD PRIMARY KEY (`compliance_id`),
+  ADD UNIQUE KEY `schedule_date_unique` (`schedule_id`, `scheduled_date`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `medicine_id` (`medicine_id`);
+
 ALTER TABLE `notifications`
   ADD PRIMARY KEY (`notification_id`),
   ADD KEY `user_id` (`user_id`),
   ADD KEY `type_id` (`type_id`);
 
---
--- Indexes for table `notification_types`
---
 ALTER TABLE `notification_types`
   ADD PRIMARY KEY (`type_id`);
 
---
--- Indexes for table `reminder_log`
---
 ALTER TABLE `reminder_log`
   ADD PRIMARY KEY (`reminder_id`),
   ADD KEY `schedule_id` (`schedule_id`);
 
---
--- Indexes for table `schedules`
---
 ALTER TABLE `schedules`
   ADD PRIMARY KEY (`schedule_id`),
   ADD KEY `user_id` (`user_id`),
   ADD KEY `medicine_id` (`medicine_id`);
 
---
--- Indexes for table `users`
---
 ALTER TABLE `users`
   ADD PRIMARY KEY (`user_id`),
   ADD UNIQUE KEY `email` (`email`);
 
---
--- Indexes for table `user_notification_settings`
---
 ALTER TABLE `user_notification_settings`
   ADD PRIMARY KEY (`setting_id`),
   ADD KEY `user_id` (`user_id`);
@@ -300,75 +281,39 @@ ALTER TABLE `user_notification_settings`
 -- AUTO_INCREMENT for dumped tables
 --
 
---
--- AUTO_INCREMENT for table `caregivers`
---
 ALTER TABLE `caregivers`
   MODIFY `caregiver_id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT for table `caregiver_assignments`
---
 ALTER TABLE `caregiver_assignments`
   MODIFY `assignment_id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT for table `dosages`
---
-ALTER TABLE `dosages`
-  MODIFY `dosage_id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `medicines`
---
 ALTER TABLE `medicines`
   MODIFY `medicine_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
---
--- AUTO_INCREMENT for table `medicine_inventory`
---
 ALTER TABLE `medicine_inventory`
   MODIFY `inventory_id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT for table `medicine_refills`
---
 ALTER TABLE `medicine_refills`
   MODIFY `refill_id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT for table `notifications`
---
+ALTER TABLE `medication_compliance`
+  MODIFY `compliance_id` int(11) NOT NULL AUTO_INCREMENT;
+
 ALTER TABLE `notifications`
   MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT for table `notification_types`
---
 ALTER TABLE `notification_types`
   MODIFY `type_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
---
--- AUTO_INCREMENT for table `reminder_log`
---
 ALTER TABLE `reminder_log`
   MODIFY `reminder_id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT for table `schedules`
---
 ALTER TABLE `schedules`
   MODIFY `schedule_id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT for table `users`
---
 ALTER TABLE `users`
   MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
---
--- AUTO_INCREMENT for table `user_notification_settings`
---
 ALTER TABLE `user_notification_settings`
   MODIFY `setting_id` int(11) NOT NULL AUTO_INCREMENT;
 
@@ -376,62 +321,38 @@ ALTER TABLE `user_notification_settings`
 -- Constraints for dumped tables
 --
 
---
--- Constraints for table `caregiver_assignments`
---
 ALTER TABLE `caregiver_assignments`
   ADD CONSTRAINT `caregiver_assignments_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
   ADD CONSTRAINT `caregiver_assignments_ibfk_2` FOREIGN KEY (`caregiver_id`) REFERENCES `caregivers` (`caregiver_id`);
 
---
--- Constraints for table `dosages`
---
-ALTER TABLE `dosages`
-  ADD CONSTRAINT `dosages_ibfk_1` FOREIGN KEY (`medicine_id`) REFERENCES `medicines` (`medicine_id`);
-
---
--- Constraints for table `medicines`
---
 ALTER TABLE `medicines`
   ADD CONSTRAINT `medicines_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`);
 
---
--- Constraints for table `medicine_inventory`
---
 ALTER TABLE `medicine_inventory`
   ADD CONSTRAINT `medicine_inventory_ibfk_1` FOREIGN KEY (`medicine_id`) REFERENCES `medicines` (`medicine_id`);
 
---
--- Constraints for table `medicine_refills`
---
 ALTER TABLE `medicine_refills`
   ADD CONSTRAINT `medicine_refills_ibfk_1` FOREIGN KEY (`medicine_id`) REFERENCES `medicines` (`medicine_id`);
 
---
--- Constraints for table `notifications`
---
+ALTER TABLE `medication_compliance`
+  ADD CONSTRAINT `medication_compliance_ibfk_1` FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`schedule_id`),
+  ADD CONSTRAINT `medication_compliance_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
+  ADD CONSTRAINT `medication_compliance_ibfk_3` FOREIGN KEY (`medicine_id`) REFERENCES `medicines` (`medicine_id`);
+
 ALTER TABLE `notifications`
   ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
   ADD CONSTRAINT `notifications_ibfk_2` FOREIGN KEY (`type_id`) REFERENCES `notification_types` (`type_id`);
 
---
--- Constraints for table `reminder_log`
---
 ALTER TABLE `reminder_log`
   ADD CONSTRAINT `reminder_log_ibfk_1` FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`schedule_id`);
 
---
--- Constraints for table `schedules`
---
 ALTER TABLE `schedules`
   ADD CONSTRAINT `schedules_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
   ADD CONSTRAINT `schedules_ibfk_2` FOREIGN KEY (`medicine_id`) REFERENCES `medicines` (`medicine_id`);
 
---
--- Constraints for table `user_notification_settings`
---
 ALTER TABLE `user_notification_settings`
   ADD CONSTRAINT `user_notification_settings_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`);
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
