@@ -6,6 +6,11 @@ const db = require("./db/connection");
 
 const authRoutes = require("./routes/auth");
 const medicineRoutes = require("./routes/medicine");
+const scheduleRoutes = require("./routes/schedule");
+const complianceRoutes = require("./routes/compliance");
+const inventoryRoutes = require("./routes/inventory");
+const notificationRoutes = require("./routes/notification");
+const { startMissedDoseJob } = require("./jobs/missedDoseJob");
 
 const app = express();
 
@@ -16,6 +21,10 @@ app.use(express.json());
 
 app.use("/api", authRoutes);
 app.use("/api", medicineRoutes);
+app.use("/api", scheduleRoutes);
+app.use("/api", complianceRoutes);
+app.use("/api", inventoryRoutes);
+app.use("/api", notificationRoutes);
 
 app.get("/", (req, res) => {
     res.json({
@@ -56,4 +65,5 @@ app.get("/api/test-users", (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    startMissedDoseJob();
 });

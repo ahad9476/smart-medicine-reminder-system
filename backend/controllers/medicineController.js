@@ -36,9 +36,17 @@ const createMedicine = (req, res) => {
     );
 };
 const getMedicines = (req, res) => {
-    const sql = "SELECT * FROM Medicines";
+    const { user_id } = req.query;
 
-    db.query(sql, (err, results) => {
+    let sql = "SELECT * FROM Medicines";
+    let params = [];
+
+    if (user_id) {
+        sql += " WHERE user_id = ?";
+        params.push(user_id);
+    }
+
+    db.query(sql, params, (err, results) => {
         if (err) {
             console.error("GET MEDICINES ERROR:", err);
 
