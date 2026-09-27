@@ -21,11 +21,6 @@ app.use(express.json());
 
 app.use("/api", authRoutes);
 app.use("/api", medicineRoutes);
-app.use("/api", scheduleRoutes);
-app.use("/api", complianceRoutes);
-app.use("/api", inventoryRoutes);
-app.use("/api", notificationRoutes);
-
 app.get("/", (req, res) => {
     res.json({
         message: "Smart Medicine Reminder System Backend is running!"
@@ -36,6 +31,7 @@ app.get("/api/test-db", (req, res) => {
     db.query("SELECT 1 AS test", (err, results) => {
         if (err) {
             console.error(err);
+
             return res.status(500).json({
                 message: "Database connection failed"
             });
@@ -54,6 +50,7 @@ app.get("/api/test-users", (req, res) => {
     db.query(sql, (err, results) => {
         if (err) {
             console.error(err);
+
             return res.status(500).json({
                 message: "Failed to fetch users"
             });
