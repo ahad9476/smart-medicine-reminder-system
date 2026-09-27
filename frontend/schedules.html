@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Schedules — Smart Medicine Reminder</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">Smart Medicine Reminder</div>
+    <ul class="nav-list">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="medicines.html">Medicines</a></li>
+      <li><a href="schedules.html" class="active">Schedules</a></li>
+      <li><a href="#">Reminders</a></li>
+      <li><a href="notifications.html">Notifications</a></li>
+      <li><a href="#">Caregivers</a></li>
+      <li><a href="inventory.html">Inventory</a></li>
+    </ul>
+    <button class="sidebar-logout" id="logoutBtn">Logout</button>
+  </aside>
+
+  <main class="main">
+    <div class="main-header">
+      <h1>Schedules</h1>
+      <p>Set when each medicine should be taken, and its dosage/instructions.</p>
+    </div>
+
+    <div class="panel">
+      <div class="toolbar">
+        <h2 style="margin:0;">All Schedules</h2>
+        <button class="btn-add" id="openAddModal">+ Add Schedule</button>
+      </div>
+
+      <table class="med-table">
+        <thead>
+          <tr>
+            <th>Medicine</th>
+            <th>Time</th>
+            <th>Frequency</th>
+            <th>Dosage</th>
+            <th>Instructions</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="scheduleRows">
+          <tr><td colspan="6" class="empty-state">Loading schedules…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- Add / Edit Modal (shared by both actions) -->
+<div class="modal-backdrop" id="scheduleModalBackdrop">
+  <div class="modal">
+    <h2 id="modalTitle">Add Schedule</h2>
+    <form id="scheduleForm">
+      <input type="hidden" id="scheduleId" />
+      <div class="field">
+        <label for="schedMedicine">Medicine</label>
+        <select id="schedMedicine" required></select>
+      </div>
+      <div class="field">
+        <label for="schedTime">Time</label>
+        <input type="time" id="schedTime" required />
+      </div>
+      <div class="field">
+        <label for="schedFrequency">Frequency</label>
+        <select id="schedFrequency">
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="as needed">As needed</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="schedDosage">Dosage Amount</label>
+        <input type="text" id="schedDosage" placeholder="e.g. 1 tablet" />
+      </div>
+      <div class="field">
+        <label for="schedInstructions">Instructions</label>
+        <input type="text" id="schedInstructions" placeholder="e.g. Take after breakfast" />
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancelModal">Cancel</button>
+        <button type="submit" class="btn-primary" id="saveScheduleBtn" style="width:auto; padding:0.55rem 1.2rem;">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="js/api.js"></script>
+<script src="js/schedules.js"></script>
+</body>
+</html>
