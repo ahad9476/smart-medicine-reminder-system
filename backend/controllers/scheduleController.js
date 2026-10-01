@@ -118,23 +118,25 @@ const getTodaySchedules = (req, res) => {
 
 const updateSchedule = (req, res) => {
     const scheduleId = req.params.id;
-    const { schedule_time, frequency, dosage_amount, instructions } = req.body;
+    const { schedule_time, frequency, dosage_amount, instructions, user_id } = req.body;
 
-    if (!schedule_time) {
+    if (!schedule_time || !user_id) {
         return res.status(400).json({
-            message: "schedule_time is required"
+            message: "schedule_time and user_id are required"
         });
     }
 
+    // Scoped to user_id too, so one account can't edit another's schedule
+    // just by guessing a schedule_id.
     const sql = `
         UPDATE schedules
         SET schedule_time = ?, frequency = ?, dosage_amount = ?, instructions = ?
-        WHERE schedule_id = ?
+        WHERE schedule_id = ? AND user_id = ?
     `;
 
     db.query(
         sql,
-        [schedule_time, frequency || null, dosage_amount || null, instructions || null, scheduleId],
+        [schedule_time, frequency || null, dosage_amount || null, instructions || null, scheduleId, user_id],
         (err, result) => {
             if (err) {
                 console.error("UPDATE SCHEDULE ERROR:", err);
@@ -159,10 +161,17 @@ const updateSchedule = (req, res) => {
 
 const deleteSchedule = (req, res) => {
     const scheduleId = req.params.id;
+    const { user_id } = req.query;
+
+    if (!user_id) {
+        return res.status(400).json({
+            message: "user_id is required"
+        });
+    }
 
     db.query(
-        "DELETE FROM schedules WHERE schedule_id = ?",
-        [scheduleId],
+        "DELETE FROM schedules WHERE schedule_id = ? AND user_id = ?",
+        [scheduleId, user_id],
         (err, result) => {
             if (err) {
                 console.error("DELETE SCHEDULE ERROR:", err);

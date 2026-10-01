@@ -3,7 +3,7 @@ const db = require("../db/connection");
 
 const register = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, role } = req.body;
 
         // Check required fields
         if (!name || !email || !password) {
@@ -11,6 +11,10 @@ const register = async (req, res) => {
                 message: "Name, email and password are required"
             });
         }
+
+        // Only allow known roles; default to patient for anything else/missing.
+        const allowedRoles = ["patient", "caregiver"];
+        const finalRole = allowedRoles.includes(role) ? role : "patient";
 
         // Check whether email already exists
         const checkSql = "SELECT * FROM Users WHERE email = ?";
@@ -40,7 +44,7 @@ const register = async (req, res) => {
 
             db.query(
                 insertSql,
-                [name, email, hashedPassword, "patient"],
+                [name, email, hashedPassword, finalRole],
                 (err, result) => {
                     if (err) {
                         console.error(err);

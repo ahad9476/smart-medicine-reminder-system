@@ -60,23 +60,25 @@ const getMedicines = (req, res) => {
 };
 const updateMedicine = (req, res) => {
     const medicineId = req.params.id;
-    const { name, description, dosage } = req.body;
+    const { name, description, dosage, user_id } = req.body;
 
-    if (!name) {
+    if (!name || !user_id) {
         return res.status(400).json({
-            message: "Medicine name is required"
+            message: "Medicine name and user_id are required"
         });
     }
 
+    // Scoped to user_id too, so one account can't edit another's medicine
+    // just by guessing a medicine_id.
     const sql = `
         UPDATE Medicines
         SET name = ?, description = ?, dosage = ?
-        WHERE medicine_id = ?
+        WHERE medicine_id = ? AND user_id = ?
     `;
 
     db.query(
         sql,
-        [name, description || null, dosage || null, medicineId],
+        [name, description || null, dosage || null, medicineId, user_id],
         (err, result) => {
             if (err) {
                 console.error("UPDATE MEDICINE ERROR:", err);
@@ -100,13 +102,22 @@ const updateMedicine = (req, res) => {
 };
 const deleteMedicine = (req, res) => {
     const medicineId = req.params.id;
+    const { user_id } = req.query;
 
+    if (!user_id) {
+        return res.status(400).json({
+            message: "user_id is required"
+        });
+    }
+
+    // Scoped to user_id too, so one account can't delete another's medicine
+    // just by guessing a medicine_id.
     const sql = `
         DELETE FROM Medicines
-        WHERE medicine_id = ?
+        WHERE medicine_id = ? AND user_id = ?
     `;
 
-    db.query(sql, [medicineId], (err, result) => {
+    db.query(sql, [medicineId, user_id], (err, result) => {
         if (err) {
             console.error("DELETE MEDICINE ERROR:", err);
 
