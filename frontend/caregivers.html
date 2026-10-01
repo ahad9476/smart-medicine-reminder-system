@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Caregivers — Smart Medicine Reminder</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">Smart Medicine Reminder</div>
+    <ul class="nav-list">
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="medicines.html">Medicines</a></li>
+      <li><a href="schedules.html">Schedules</a></li>
+      <li><a href="reminders.html">Reminders</a></li>
+      <li><a href="notifications.html">Notifications</a></li>
+      <li><a href="caregivers.html" class="active">Caregivers</a></li>
+      <li><a href="inventory.html">Inventory</a></li>
+    </ul>
+    <button class="sidebar-logout" id="logoutBtn">Logout</button>
+  </aside>
+
+  <main class="main">
+    <div class="main-header">
+      <h1>Caregivers</h1>
+      <p>People who help look after your medication routine.</p>
+    </div>
+
+    <div class="panel">
+      <div class="toolbar">
+        <h2 style="margin:0;">Your Caregivers</h2>
+        <button class="btn-add" id="openAddModal">+ Add Caregiver</button>
+      </div>
+
+      <table class="med-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Relationship</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="caregiverRows">
+          <tr><td colspan="5" class="empty-state">Loading caregivers…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- Add Caregiver Modal -->
+
+<div class="modal-backdrop" id="caregiverModalBackdrop">
+  <div class="modal">
+    <h2>Assign Caregiver</h2>
+
+    <p class="muted">
+      The caregiver must already have an account registered
+      with the Caregiver role.
+    </p>
+
+    <form id="caregiverForm">
+
+      <div class="field">
+        <label for="cgEmail">Caregiver Account Email</label>
+        <input
+          type="email"
+          id="cgEmail"
+          required
+          placeholder="caregiver@example.com"
+        />
+      </div>
+
+      <div class="field">
+        <label for="cgRelationship">Relationship</label>
+        <input
+          type="text"
+          id="cgRelationship"
+          placeholder="e.g. Daughter, Son, Nurse"
+        />
+      </div>
+
+      <div class="field">
+        <label for="cgPhone">Phone</label>
+        <input
+          type="text"
+          id="cgPhone"
+          placeholder="Optional"
+        />
+      </div>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn-secondary"
+          id="cancelModal"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          class="btn-primary"
+          id="saveCaregiverBtn"
+          style="width:auto; padding:0.55rem 1.2rem;"
+        >
+          Assign
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="js/api.js"></script>
+<script src="js/caregivers.js"></script>
+</body>
+</html>

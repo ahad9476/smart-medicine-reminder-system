@@ -5,8 +5,15 @@ const errorBox = document.getElementById("loginError");
 const btn = document.getElementById("loginBtn");
 
 // If already logged in, skip the login page entirely.
-if (localStorage.getItem("token")) {
-  window.location.href = "dashboard.html";
+const savedUser = JSON.parse(
+    localStorage.getItem("user") || "null"
+);
+
+if (localStorage.getItem("token") && savedUser) {
+    window.location.href =
+        savedUser.role === "caregiver"
+            ? "caregiver-dashboard.html"
+            : "dashboard.html";
 }
 
 function showError(message) {
@@ -59,7 +66,12 @@ localStorage.setItem(
     })
 );
 
+    if (data.user.role === "caregiver") {
+    window.location.href = "caregiver-dashboard.html";
+} else {
     window.location.href = "dashboard.html";
+}
+
   } catch (err) {
     showError("Can't reach the server. Is the backend running?");
   } finally {

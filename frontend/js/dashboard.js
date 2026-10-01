@@ -8,7 +8,7 @@ document.getElementById("logoutBtn").addEventListener("click", logout);
 async function loadDashboard() {
   // Total medicines: reuse the same endpoint the Medicines page uses.
   try {
-    const medicines = await apiFetch("/api/medicines");
+    const medicines = await apiFetch(`/api/medicines?user_id=${user.user_id}`);
     document.getElementById("totalMedicines").textContent = medicines.length;
   } catch (err) {
     document.getElementById("totalMedicines").textContent = "0";

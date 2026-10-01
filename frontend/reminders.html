@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Dashboard — Smart Medicine Reminder</title>
+<title>Reminders — Smart Medicine Reminder</title>
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -12,10 +12,10 @@
   <aside class="sidebar">
     <div class="sidebar-brand">Smart Medicine Reminder</div>
     <ul class="nav-list">
-      <li><a href="dashboard.html" class="active">Dashboard</a></li>
+      <li><a href="dashboard.html">Dashboard</a></li>
       <li><a href="medicines.html">Medicines</a></li>
       <li><a href="schedules.html">Schedules</a></li>
-      <li><a href="reminders.html">Reminders</a></li>
+      <li><a href="reminders.html" class="active">Reminders</a></li>
       <li><a href="notifications.html">Notifications</a></li>
       <li><a href="caregivers.html">Caregivers</a></li>
       <li><a href="inventory.html">Inventory</a></li>
@@ -25,32 +25,30 @@
 
   <main class="main">
     <div class="main-header">
-      <h1 id="welcomeMsg">Welcome!</h1>
-      <p>Here's what's happening with your medicines today.</p>
-    </div>
-
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-label">Total Medicines</div>
-        <div class="stat-value" id="totalMedicines">–</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Today's Medicines</div>
-        <div class="stat-value" id="todayMedicines">–</div>
-      </div>
+      <h1>Reminders</h1>
+      <p>A log of every dose reminder sent, based on your schedules.</p>
     </div>
 
     <div class="panel">
-      <h2>Today's Schedule</h2>
-      <ul class="list-simple" id="todayList">
-        <li>Loading…</li>
-      </ul>
+      <table class="med-table">
+        <thead>
+          <tr>
+            <th>Medicine</th>
+            <th>Scheduled Time</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="reminderRows">
+          <tr><td colspan="4" class="empty-state">Loading reminders…</td></tr>
+        </tbody>
+      </table>
     </div>
   </main>
 </div>
 
 <div id="toast"></div>
 <script src="js/api.js"></script>
-<script src="js/dashboard.js"></script>
+<script src="js/reminders.js"></script>
 </body>
 </html>

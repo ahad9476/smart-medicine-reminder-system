@@ -15,9 +15,9 @@
       <li><a href="dashboard.html">Dashboard</a></li>
       <li><a href="medicines.html">Medicines</a></li>
       <li><a href="schedules.html">Schedules</a></li>
-      <li><a href="#">Reminders</a></li>
+      <li><a href="reminders.html">Reminders</a></li>
       <li><a href="notifications.html">Notifications</a></li>
-      <li><a href="#">Caregivers</a></li>
+      <li><a href="caregivers.html">Caregivers</a></li>
       <li><a href="inventory.html" class="active">Inventory</a></li>
     </ul>
     <button class="sidebar-logout" id="logoutBtn">Logout</button>
@@ -50,10 +50,26 @@
         </tbody>
       </table>
     </div>
+
+    <div class="panel">
+      <h2 style="margin-top:0;">Refill History</h2>
+      <table class="med-table">
+        <thead>
+          <tr>
+            <th>Medicine</th>
+            <th>Quantity Added</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="refillRows">
+          <tr><td colspan="3" class="empty-state">Loading refill history…</td></tr>
+        </tbody>
+      </table>
+    </div>
   </main>
 </div>
 
-<!-- Set / Restock Modal -->
+<!-- Set / Restock Modal (overwrites the quantity) -->
 <div class="modal-backdrop" id="inventoryModalBackdrop">
   <div class="modal">
     <h2>Set / Restock Inventory</h2>
@@ -73,6 +89,25 @@
       <div class="modal-actions">
         <button type="button" class="btn-secondary" id="cancelModal">Cancel</button>
         <button type="submit" class="btn-primary" id="saveInventoryBtn" style="width:auto; padding:0.55rem 1.2rem;">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Refill Modal (adds to the quantity, and logs it in refill history) -->
+<div class="modal-backdrop" id="refillModalBackdrop">
+  <div class="modal">
+    <h2>Record Refill</h2>
+    <form id="refillForm">
+      <input type="hidden" id="refillMedicineId" />
+      <p id="refillMedicineName" style="margin-top:-0.5rem; color:#666;"></p>
+      <div class="field">
+        <label for="refillQuantity">Quantity to Add</label>
+        <input type="number" id="refillQuantity" min="1" required placeholder="e.g. 10" />
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancelRefillModal">Cancel</button>
+        <button type="submit" class="btn-primary" id="saveRefillBtn" style="width:auto; padding:0.55rem 1.2rem;">Save</button>
       </div>
     </form>
   </div>

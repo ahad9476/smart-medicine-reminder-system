@@ -139,7 +139,7 @@ form.addEventListener("submit", async (e) => {
     if (idField.value) {
       await apiFetch(`/api/schedules/${idField.value}`, {
         method: "PUT",
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload), // already includes user_id
       });
       showToast("Schedule updated.");
     } else {
@@ -164,7 +164,7 @@ async function deleteSchedule(id) {
   if (!confirm("Delete this schedule? This cannot be undone.")) return;
 
   try {
-    await apiFetch(`/api/schedules/${id}`, { method: "DELETE" });
+    await apiFetch(`/api/schedules/${id}?user_id=${user.user_id}`, { method: "DELETE" });
     showToast("Schedule deleted.");
     loadSchedules();
   } catch (err) {

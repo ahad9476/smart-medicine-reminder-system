@@ -1,6 +1,8 @@
 requireAuth();
 document.getElementById("logoutBtn").addEventListener("click", logout);
 
+const user = getCurrentUser();
+
 const tableBody = document.getElementById("medicineRows");
 const backdrop = document.getElementById("medicineModalBackdrop");
 const form = document.getElementById("medicineForm");
@@ -16,7 +18,7 @@ let medicines = [];
 async function loadMedicines() {
   tableBody.innerHTML = `<tr><td colspan="4" class="empty-state">Loading medicines…</td></tr>`;
   try {
-    medicines = await apiFetch("/api/medicines");
+    medicines = await apiFetch(`/api/medicines?user_id=${user.user_id}`);
     renderTable();
   } catch (err) {
     tableBody.innerHTML = `<tr><td colspan="4" class="empty-state">${err.message}</td></tr>`;
@@ -94,8 +96,6 @@ backdrop.addEventListener("click", (e) => {
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-const user = getCurrentUser();
-
 const payload = {
     user_id: user.user_id,
     name: nameField.value.trim(),
@@ -116,7 +116,7 @@ const payload = {
     if (idField.value) {
       await apiFetch(`/api/medicines/${idField.value}`, {
         method: "PUT",
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload), // already includes user_id
       });
       showToast("Medicine updated.");
     } else {
@@ -141,7 +141,7 @@ async function deleteMedicine(id) {
   if (!confirm("Delete this medicine? This cannot be undone.")) return;
 
   try {
-    await apiFetch(`/api/medicines/${id}`, { method: "DELETE" });
+    await apiFetch(`/api/medicines/${id}?user_id=${user.user_id}`, { method: "DELETE" });
     showToast("Medicine deleted.");
     loadMedicines();
   } catch (err) {

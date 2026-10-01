@@ -1,92 +1,109 @@
-# What changed (v2)
+# What changed
 
-## Database
+This covers everything added across two rounds of work: schedules/compliance/
+inventory/notifications tracking (v2), then an audit pass that fixed three
+real bugs and completed caregivers, refills, and reminders (v3) — every
+feature and every nav link in the sidebar now does something real.
 
-Run **one** of these (not both):
+## Database setup
 
-- **Existing DB, keep your data:** `database/migration_v2_schedules_compliance.sql`
-- **Fresh install:** import `database/smart_medicine.sql` (already updated)
+Run these **in order** against your database (skip ones you've already run):
 
-Then, optionally, for a working demo tonight/tomorrow:
+1. `database/migration_v2_schedules_compliance.sql`
+2. `database/migration_v3_reminders.sql`
 
-- `database/seed_demo_data.sql` — adds 3 schedules for today (user 1) and
-  starting inventory, with Ace deliberately set to 3 left so a single
-  "Mark Taken" click drops it to 2 and fires the low-stock notification live.
+Or for a **fresh install**, just import `database/smart_medicine.sql` (already
+includes everything from both migrations) and skip both of the above.
 
-Schema changes:
+Optional demo content: `database/seed_demo_data.sql` (today's schedules +
+starting inventory, with one medicine deliberately low).
+
+### Schema changes, v2
 - `dosages` table dropped (nothing in the code used it).
 - `schedules` gained `dosage_amount`, `instructions`.
-- New `medication_compliance` table: one row per schedule per day
-  (`taken` / `missed` / `skipped`), with a `UNIQUE KEY (schedule_id, scheduled_date)`
-  so both the button and the background job can safely upsert/insert-ignore it.
-- `medicine_inventory` gained `low_stock_notified` (prevents repeat alerts) and
-  a `UNIQUE KEY` on `medicine_id` (one inventory row per medicine, upsertable).
+- New `medication_compliance` table (taken/missed/skipped per schedule per day).
+- `medicine_inventory` gained `low_stock_notified` + a unique key on `medicine_id`.
 
-## Backend (all new files, nothing existing was removed)
+### Schema changes, v3
+- `reminder_log` gained `notified` and a unique key on `(schedule_id, reminder_date)`,
+  and `status` now defaults to `'sent'`.
 
-- `controllers/scheduleController.js` + `routes/schedule.js`
-  - `GET /api/schedules/today?user_id=1` — powers the dashboard's "Today's Schedule"
-  - `POST /api/schedules`, `GET /api/schedules`, `PUT /api/schedules/:id`, `DELETE /api/schedules/:id`
-- `controllers/complianceController.js` + `routes/compliance.js`
-  - `POST /api/compliance/mark` — body `{ schedule_id, user_id, medicine_id, status }`,
-    `status` is `"taken"` or `"skipped"`. This is what the dashboard buttons call.
-    Safe to click more than once (upsert).
-  - `POST /api/compliance` — your original manual insert, kept as-is.
-  - `GET /api/compliance?user_id=1&from=...&to=...` — history.
-- `controllers/inventoryController.js` + `routes/inventory.js`
-  - `GET /api/inventory?medicine_id=...`
-  - `POST /api/inventory` — manual set/restock, body `{ medicine_id, quantity, expiry_date }`
-  - `decrementInventoryAndNotify()` — internal helper, called automatically
-    from `markDose` whenever a dose is marked `taken`. Decrements by 1,
-    checks the threshold (quantity ≤ 3), inserts a "Low Stock" notification
-    (`type_id = 3`) the first time it crosses that line, and won't repeat
-    until stock is refilled back above it.
-- `controllers/notificationController.js` + `routes/notification.js`
-  - `GET /api/notifications?user_id=1`
-- `jobs/missedDoseJob.js`
-  - Runs every 15 minutes (plus once ~5s after boot). Scans today's
-    schedules for anything more than 2 hours past its time with no
-    compliance row yet, marks it `missed`, and sends a "Missed Dose"
-    notification (`type_id = 2`) — once per dose, tracked via a `notified` flag.
-  - Uses a plain `setInterval`, not a cron package — zero new npm dependencies.
-- `server.js` — wires up the four new route files and starts the background job on boot.
+## Bugs found and fixed (v3 audit)
 
-## Frontend
+1. **Registration ignored the role dropdown.** Every new account was hardcoded
+   to `"patient"` regardless of what was selected. Fixed in `authController.js`
+   to use the submitted role (validated against `patient`/`caregiver`).
+2. **Medicines list leaked across accounts.** The Dashboard's medicine count
+   and the Medicines page both fetched *every* user's medicines, not just the
+   logged-in one. Fixed by scoping both calls with `?user_id=`.
+3. **No ownership check on edit/delete.** Any logged-in user could edit or
+   delete another user's medicine or schedule just by guessing an ID, since
+   those queries never checked who owned the row. Fixed by requiring and
+   checking `user_id` on update/delete for both medicines and schedules.
 
-- `js/dashboard.js` — "Today's Schedule" now shows **Mark Taken** / **Skip**
-  buttons on any pending dose. Clicking either calls `/api/compliance/mark`
-  and refreshes the list; a low-stock heads-up toast appears if that click
-  just triggered one.
-- **`schedules.html` + `js/schedules.js` (new page)** — full CRUD screen for
-  schedules: medicine dropdown, time, frequency, dosage amount, instructions.
-  This is what you use to actually create real schedules instead of relying
-  on seed data or the raw API.
-- **`inventory.html` + `js/inventory.js` (new page)** — stock levels per
-  medicine with a status badge (OK / Low stock / Out of stock) and a
-  "Set / Restock" modal to manually update quantity.
-- **`notifications.html` + `js/notifications.js` (new page)** — read-only
-  feed of "Missed Dose" / "Low Stock" notifications, newest first.
-- Sidebar nav on every page now links Schedules/Notifications/Inventory to
-  these real pages instead of `#` placeholders.
-- `controllers/inventoryController.js` → `getInventory` now joins `medicines`
-  for a display name and supports `?user_id=` filtering (needed by the new
-  Inventory page).
+## New features (v3) — closes out the remaining placeholder nav links
 
-## Not built yet (next parts, whenever you're ready)
+- **Caregivers** (`caregiverController.js` + `routes/caregiver.js` +
+  `caregivers.html`/`js/caregivers.js`): add a caregiver (reusing an existing
+  caregiver record by email if they're already linked to someone else), list
+  your assigned caregivers, remove an assignment.
+  - `GET /api/caregivers?user_id=1`
+  - `POST /api/caregivers` — body `{ user_id, name, email, phone, relationship }`
+  - `DELETE /api/caregivers/assignment/:id`
+- **Refills** (`refillController.js` + `routes/refill.js`, wired into the
+  existing Inventory page as a "Refill" button per row + a history table):
+  completes the previously-unused `medicine_refills` table. Recording a
+  refill both logs it and adds the quantity back into inventory in one step
+  (and resets the low-stock flag if it brings stock back above the threshold).
+  - `POST /api/refills` — body `{ medicine_id, quantity_added }`
+  - `GET /api/refills?user_id=1`
+- **Reminders** (`reminderController.js` + `routes/reminder.js` +
+  `jobs/dueReminderJob.js` + `reminders.html`/`js/reminders.js`): completes
+  the previously-unused `reminder_log` table and the never-used "Medicine
+  Reminder" notification type (`type_id = 1`, seeded since the very first
+  schema but never actually used until now). A background job (same pattern
+  as the missed-dose job, plain `setInterval`, no new dependency) checks
+  every 5 minutes for schedules whose time just arrived, logs it, and sends
+  a notification.
+  - `GET /api/reminders?user_id=1`
 
-- Caregivers, Reminders (still placeholder nav links, no backend yet).
-- Refill flow (`medicine_refills` table exists but has no controller yet;
-  "Set / Restock" on the Inventory page overwrites quantity directly rather
-  than logging a refill history).
+Every sidebar link (Dashboard, Medicines, Schedules, Reminders, Notifications,
+Caregivers, Inventory) now goes to a real, working page.
 
-## Before you present
+## Full feature list (current state)
 
-1. Apply the migration (or fresh import) + seed data above.
-2. `cd backend && npm install && npm run dev` (or `npm start`).
+| Feature | Backend | Frontend page |
+|---|---|---|
+| Auth (register/login) | ✅ | ✅ |
+| Medicines | ✅ | ✅ |
+| Schedules | ✅ | ✅ |
+| Compliance (taken/missed/skipped) | ✅ | ✅ (dashboard buttons) |
+| Inventory + auto-decrement | ✅ | ✅ |
+| Low-stock notifications | ✅ | ✅ (Notifications page) |
+| Missed-dose detection + notification | ✅ (background job) | ✅ (Notifications page) |
+| Reminders (due-dose notification) | ✅ (background job) | ✅ |
+| Refills | ✅ | ✅ (on Inventory page) |
+| Caregivers | ✅ | ✅ |
+
+## Known limitation (not fixed, by design)
+
+Login/registration doesn't use real JWTs — `login.js` stores a placeholder
+string, and no backend route checks an Authorization header. This was already
+the case before any of this work started and is a bigger architectural change
+(every controller would need an auth-check middleware) than "complete the
+features" calls for. Flagging it so it's a conscious choice, not an oversight,
+if you're asked about it.
+
+## Before you test/present
+
+1. Run the two migrations (or fresh-import `smart_medicine.sql`).
+2. `cd backend && npm install && npm run dev` — confirm you see both
+   "MySQL database connected successfully!" and both background job start
+   messages.
 3. Register a fresh account (the seeded test user's password isn't a real
-   hash, so it won't log in) — note the `user_id` you get.
-4. Go to **Schedules**, add 2–3 real schedules for today under your account.
-5. Go to **Inventory**, set a low starting quantity (e.g. 3) for one of them.
-6. Go to **Dashboard**, click "Mark Taken" on that low-stock medicine — watch
-   the status change and a low-stock toast appear.
-7. Go to **Notifications** to show the resulting alert logged there.
+   hash — this was already true before this round too).
+4. Add a schedule for right now (or a couple minutes from now) to see the
+   Reminders job fire live — it checks every 5 minutes, so schedule something
+   within the next few minutes to see it without a long wait.
+5. Add a caregiver, record a refill, and walk through Mark Taken → low stock
+   → Notifications once more to confirm nothing regressed.

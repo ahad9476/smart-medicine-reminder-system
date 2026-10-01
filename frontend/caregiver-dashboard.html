@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Caregiver Dashboard | Smart Medicine Reminder</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        .caregiver-layout {
+            display: grid;
+            grid-template-columns: 290px 1fr;
+            gap: 20px;
+        }
+
+        .patient-card {
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            background: white;
+        }
+
+        .patient-card:hover,
+        .patient-card.selected {
+            border-color: var(--primary);
+            background: #f0fafa;
+        }
+
+        .patient-card h3 {
+            margin: 0 0 6px;
+        }
+
+        .patient-card p {
+            margin: 4px 0;
+            color: var(--sub);
+            font-size: 13px;
+        }
+
+        .patient-section {
+            margin-bottom: 22px;
+        }
+
+        .patient-section h2 {
+            margin-bottom: 14px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 20px;
+            background: #eef2f7;
+            font-size: 12px;
+            text-transform: capitalize;
+        }
+
+        .status.taken {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status.skipped,
+        .status.missed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .dose-button {
+            padding: 7px 10px;
+            margin: 3px;
+            background: var(--primary);
+            color: white;
+        }
+
+        .dose-button.skip {
+            background: #b45309;
+        }
+
+        .empty-message {
+            color: var(--sub);
+            padding: 20px 0;
+        }
+
+        @media(max-width: 750px) {
+            .caregiver-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .main {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            Smart Medicine Reminder
+        </div>
+
+        <ul class="nav-list">
+            <li>
+                <a href="caregiver-dashboard.html" class="active">
+                    My Patients
+                </a>
+            </li>
+        </ul>
+
+        <button class="sidebar-logout" id="logoutBtn">
+            Logout
+        </button>
+    </aside>
+
+    <main class="main">
+
+        <div class="main-header">
+            <h1 id="welcomeMessage">Caregiver Dashboard</h1>
+            <p>
+                Monitor the medication routine of your assigned patients.
+            </p>
+        </div>
+
+        <div class="caregiver-layout">
+
+            <section class="panel">
+                <h2>Assigned Patients</h2>
+                <div id="patientList">
+                    Loading patients...
+                </div>
+            </section>
+
+            <section>
+
+                <div class="panel patient-section">
+                    <h2 id="patientTitle">
+                        Select a patient
+                    </h2>
+
+                    <div id="patientDetails" class="empty-message">
+                        Choose a patient from the left panel to view
+                        their medication information.
+                    </div>
+                </div>
+
+                <div class="panel patient-section">
+                    <h2>Today's Medication Schedule</h2>
+
+                    <div id="scheduleList">
+                        No patient selected.
+                    </div>
+                </div>
+
+                <div class="panel patient-section">
+                    <h2>Medicine Inventory</h2>
+
+                    <div id="inventoryList">
+                        No patient selected.
+                    </div>
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+</div>
+
+<div id="toast"></div>
+
+<script src="js/api.js"></script>
+<script src="js/caregiver-dashboard.js"></script>
+
+</body>
+</html>

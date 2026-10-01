@@ -168,7 +168,8 @@ CREATE TABLE `reminder_log` (
   `reminder_id` int(11) NOT NULL,
   `schedule_id` int(11) NOT NULL,
   `reminder_date` date DEFAULT NULL,
-  `status` varchar(30) DEFAULT NULL
+  `status` varchar(30) NOT NULL DEFAULT 'sent',
+  `notified` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -262,7 +263,7 @@ ALTER TABLE `notification_types`
 
 ALTER TABLE `reminder_log`
   ADD PRIMARY KEY (`reminder_id`),
-  ADD KEY `schedule_id` (`schedule_id`);
+  ADD UNIQUE KEY `schedule_reminder_date_unique` (`schedule_id`, `reminder_date`);
 
 ALTER TABLE `schedules`
   ADD PRIMARY KEY (`schedule_id`),
