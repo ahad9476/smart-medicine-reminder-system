@@ -1,6 +1,18 @@
 requireAuth();
 
 const user = getCurrentUser();
+
+async function requestNotificationPermission() {
+  if (!("Notification" in window)) {
+    console.log("This browser does not support notifications.");
+    return;
+  }
+
+  if (Notification.permission === "default") {
+    await Notification.requestPermission();
+  }
+}
+
 document.getElementById("welcomeMsg").textContent = `Welcome, ${user?.name || "there"}!`;
 
 document.getElementById("logoutBtn").addEventListener("click", logout);
@@ -25,7 +37,9 @@ try {
   try {
     const today = await apiFetch(`/api/schedules/today?user_id=${user.user_id}`);
     renderTodayList(today);
-    document.getElementById("todayMedicines").textContent = today.length;
+document.getElementById("todayMedicines").textContent = today.length;
+
+checkMedicationReminders(today);
   } catch (err) {
     document.getElementById("todayMedicines").textContent = "0";
     renderTodayList([]);
@@ -101,4 +115,49 @@ async function markDose(li, status) {
   }
 }
 
+function checkMedicationReminders(items) {
+  if (!("Notification" in window)) return;
+  if (Notification.permission !== "granted") return;
+
+  const now = new Date();
+  const currentHours = String(now.getHours()).padStart(2, "0");
+  const currentMinutes = String(now.getMinutes()).padStart(2, "0");
+
+  const currentTime = `${currentHours}:${currentMinutes}`;
+
+  items.forEach((item) => {
+    if (item.status !== "pending") return;
+
+    const scheduledTime = String(item.time || "").slice(0, 5);
+
+    if (scheduledTime !== currentTime) return;
+
+    const reminderKey = `reminder_${user.user_id}_${item.schedule_id}_${now.toISOString().slice(0, 10)}`;
+
+    // Prevent the same reminder from appearing repeatedly
+    // during the same day.
+    if (localStorage.getItem(reminderKey)) return;
+
+    new Notification("Medication Reminder", {
+      body: `Time to take ${item.medicine_name || item.name}.`,
+      icon: "assets/favicon.png"
+    });
+
+    localStorage.setItem(reminderKey, "sent");
+  });
+}
+
+requestNotificationPermission();
 loadDashboard();
+
+setInterval(async () => {
+  try {
+    const today = await apiFetch(
+      `/api/schedules/today?user_id=${user.user_id}`
+    );
+
+    checkMedicationReminders(today);
+  } catch (err) {
+    console.error("Reminder check failed:", err);
+  }
+}, 60000);
