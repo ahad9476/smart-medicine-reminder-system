@@ -12,12 +12,13 @@ const getAssignedPatients = (req, res) => {
     }
 
     const sql = `
-        SELECT
-            u.user_id AS patient_id,
-            u.name AS patient_name,
-            u.email AS patient_email,
-            ca.relationship,
-            ca.assignment_id
+SELECT
+    u.user_id AS patient_id,
+    u.name AS patient_name,
+    u.email AS patient_email,
+    u.phone AS patient_phone,
+    ca.relationship,
+    ca.assignment_id
         FROM caregiver_assignments ca
         JOIN Users u ON u.user_id = ca.user_id
         WHERE ca.caregiver_user_id = ?

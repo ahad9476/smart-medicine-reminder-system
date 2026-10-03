@@ -40,12 +40,13 @@ async function loadPatients() {
             card.className = "patient-card";
 
             card.innerHTML = `
-                <h3>${escapeHtml(patient.patient_name)}</h3>
-                <p>${escapeHtml(patient.patient_email)}</p>
-                <p>Relationship: ${
-                    escapeHtml(patient.relationship || "Caregiver")
-                }</p>
-            `;
+    <h3>${escapeHtml(patient.patient_name)}</h3>
+    <p>Phone: ${escapeHtml(patient.patient_phone || "Not provided")}</p>
+    <p>${escapeHtml(patient.patient_email)}</p>
+    <p>Relationship: ${
+        escapeHtml(patient.relationship || "Caregiver")
+    }</p>
+`;
 
             card.addEventListener("click", () => {
                 selectPatient(patient, card);
@@ -84,8 +85,8 @@ async function loadPatientOverview() {
     document.getElementById("patientTitle").textContent =
         `${selectedPatient.patient_name}'s Overview`;
 
-    document.getElementById("patientDetails").textContent =
-        `Patient email: ${selectedPatient.patient_email}`;
+document.getElementById("patientDetails").textContent =
+    `Patient phone: ${selectedPatient.patient_phone || "Not provided"} | Email: ${selectedPatient.patient_email}`;
 
     try {
         const data = await apiFetch(

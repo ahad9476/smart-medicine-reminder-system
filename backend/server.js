@@ -14,6 +14,7 @@ const caregiverRoutes = require("./routes/caregiver");
 const caregiverDashboardRoutes = require("./routes/caregiverDashboard");
 const refillRoutes = require("./routes/refill");
 const reminderRoutes = require("./routes/reminder");
+const profileRoutes = require("./routes/profile");
 const { startMissedDoseJob } = require("./jobs/missedDoseJob");
 const { startDueReminderJob } = require("./jobs/dueReminderJob");
 
@@ -34,6 +35,7 @@ app.use("/api", caregiverRoutes);
 app.use("/api", caregiverDashboardRoutes);
 app.use("/api", refillRoutes);
 app.use("/api", reminderRoutes);
+app.use("/api", profileRoutes);
 app.get("/", (req, res) => {
     res.json({
         message: "Smart Medicine Reminder System Backend is running!"
