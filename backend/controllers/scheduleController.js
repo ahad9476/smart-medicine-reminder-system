@@ -1,14 +1,15 @@
 const db = require("../db/connection");
 
 const createSchedule = (req, res) => {
-    const {
-        user_id,
-        medicine_id,
-        schedule_time,
-        frequency,
-        dosage_amount,
-        instructions
-    } = req.body;
+const {
+    user_id,
+    medicine_id,
+    schedule_time,
+    frequency,
+    weekly_days,
+    dosage_amount,
+    instructions
+} = req.body;
 
     if (!user_id || !medicine_id || !schedule_time) {
         return res.status(400).json({
@@ -16,22 +17,33 @@ const createSchedule = (req, res) => {
         });
     }
 
-    const sql = `
-        INSERT INTO schedules
-            (user_id, medicine_id, schedule_time, frequency, dosage_amount, instructions)
-        VALUES (?, ?, ?, ?, ?, ?)
-    `;
-
-    db.query(
-        sql,
-        [
+const sql = `
+    INSERT INTO schedules
+        (
             user_id,
             medicine_id,
             schedule_time,
-            frequency || null,
-            dosage_amount || null,
-            instructions || null
-        ],
+            frequency,
+            weekly_days,
+            dosage_amount,
+            instructions
+        )
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+`;
+
+    db.query(
+        sql,
+       [
+    user_id,
+    medicine_id,
+    schedule_time,
+    frequency || null,
+    weekly_days && weekly_days.length
+        ? JSON.stringify(weekly_days)
+        : null,
+    dosage_amount || null,
+    instructions || null
+],
         (err, result) => {
             if (err) {
                 console.error("CREATE SCHEDULE ERROR:", err);
@@ -118,7 +130,14 @@ const getTodaySchedules = (req, res) => {
 
 const updateSchedule = (req, res) => {
     const scheduleId = req.params.id;
-    const { schedule_time, frequency, dosage_amount, instructions, user_id } = req.body;
+    const {
+    schedule_time,
+    frequency,
+    weekly_days,
+    dosage_amount,
+    instructions,
+    user_id
+} = req.body;
 
     if (!schedule_time || !user_id) {
         return res.status(400).json({
@@ -128,15 +147,30 @@ const updateSchedule = (req, res) => {
 
     // Scoped to user_id too, so one account can't edit another's schedule
     // just by guessing a schedule_id.
-    const sql = `
-        UPDATE schedules
-        SET schedule_time = ?, frequency = ?, dosage_amount = ?, instructions = ?
-        WHERE schedule_id = ? AND user_id = ?
-    `;
+const sql = `
+    UPDATE schedules
+    SET
+        schedule_time = ?,
+        frequency = ?,
+        weekly_days = ?,
+        dosage_amount = ?,
+        instructions = ?
+    WHERE schedule_id = ? AND user_id = ?
+`;
 
     db.query(
         sql,
-        [schedule_time, frequency || null, dosage_amount || null, instructions || null, scheduleId, user_id],
+       [
+    schedule_time,
+    frequency || null,
+    weekly_days && weekly_days.length
+        ? JSON.stringify(weekly_days)
+        : null,
+    dosage_amount || null,
+    instructions || null,
+    scheduleId,
+    user_id
+],
         (err, result) => {
             if (err) {
                 console.error("UPDATE SCHEDULE ERROR:", err);

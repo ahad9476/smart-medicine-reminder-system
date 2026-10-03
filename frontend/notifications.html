@@ -15,7 +15,6 @@
       <li><a href="dashboard.html">Dashboard</a></li>
       <li><a href="medicines.html">Medicines</a></li>
       <li><a href="schedules.html">Schedules</a></li>
-      <li><a href="reminders.html">Reminders</a></li>
       <li><a href="notifications.html" class="active">Notifications</a></li>
       <li><a href="caregivers.html">Caregivers</a></li>
       <li><a href="inventory.html">Inventory</a></li>
@@ -24,21 +23,47 @@
   </aside>
 
   <main class="main">
-    <div class="main-header">
-      <h1>Notifications</h1>
-      <p>Missed dose and low stock alerts, newest first.</p>
-    </div>
+<div class="main-header">
+  <h1>Notifications & Reminders</h1>
+  <p>View your medication alerts and reminder history in one place.</p>
+</div>
 
-    <div class="panel">
-      <ul class="list-simple" id="notificationList">
-        <li>Loading…</li>
-      </ul>
-    </div>
+<div class="panel">
+  <h2>Notifications</h2>
+
+  <ul class="list-simple" id="notificationList">
+    <li>Loading notifications…</li>
+  </ul>
+</div>
+
+<div class="panel" style="margin-top: 20px;">
+  <h2>Reminder History</h2>
+
+  <table class="med-table">
+    <thead>
+      <tr>
+        <th>Medicine</th>
+        <th>Scheduled Time</th>
+        <th>Date</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+
+    <tbody id="reminderRows">
+      <tr>
+        <td colspan="4" class="empty-state">
+          Loading reminders…
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
   </main>
 </div>
 
 <div id="toast"></div>
 <script src="js/api.js"></script>
 <script src="js/notifications.js"></script>
+<script src="js/reminders.js"></script>
 </body>
 </html>

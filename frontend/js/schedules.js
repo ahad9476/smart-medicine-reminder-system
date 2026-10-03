@@ -11,6 +11,8 @@ const idField = document.getElementById("scheduleId");
 const medicineField = document.getElementById("schedMedicine");
 const timeField = document.getElementById("schedTime");
 const frequencyField = document.getElementById("schedFrequency");
+const weeklyDaysField = document.getElementById("weeklyDaysField");
+const weeklyDayCheckboxes = document.querySelectorAll('input[name="weeklyDay"]');
 const dosageField = document.getElementById("schedDosage");
 const instructionsField = document.getElementById("schedInstructions");
 
@@ -19,14 +21,29 @@ let medicines = [];
 
 // ---------- Load + render ----------
 async function loadMedicinesDropdown() {
-  try {
-    medicines = await apiFetch("/api/medicines");
-    medicineField.innerHTML = medicines
-      .map((m) => `<option value="${m.medicine_id}">${escapeHtml(m.name)}</option>`)
-      .join("");
-  } catch (err) {
-    showToast(err.message, true);
-  }
+    try {
+        medicines = await apiFetch(
+            `/api/medicines?user_id=${user.user_id}`
+        );
+
+        medicineField.innerHTML = medicines
+            .map((m) =>
+                `<option value="${m.medicine_id}">
+                    ${escapeHtml(m.name)}
+                </option>`
+            )
+            .join("");
+
+        if (medicines.length === 0) {
+            medicineField.innerHTML =
+                `<option value="">No medicines available. Add a medicine first.</option>`;
+        }
+
+    } catch (error) {
+        console.error("Failed to load medicines dropdown:", error);
+        medicineField.innerHTML =
+            `<option value="">Failed to load medicines</option>`;
+    }
 }
 
 async function loadSchedules() {
@@ -86,6 +103,9 @@ function openAddModal() {
   modalTitle.textContent = "Add Schedule";
   form.reset();
   idField.value = "";
+
+  updateFrequencyFields();
+
   backdrop.classList.add("open");
 }
 
@@ -98,6 +118,24 @@ function openEditModal(id) {
   medicineField.value = sched.medicine_id;
   timeField.value = String(sched.schedule_time).slice(0, 5);
   frequencyField.value = sched.frequency ?? "daily";
+  updateFrequencyFields();
+
+ let savedWeeklyDays = [];
+
+if (Array.isArray(sched.weekly_days)) {
+  savedWeeklyDays = sched.weekly_days;
+} else if (typeof sched.weekly_days === "string" && sched.weekly_days) {
+  try {
+    savedWeeklyDays = JSON.parse(sched.weekly_days);
+  } catch (error) {
+    savedWeeklyDays = [];
+  }
+}
+
+weeklyDayCheckboxes.forEach((checkbox) => {
+  checkbox.checked = savedWeeklyDays.includes(checkbox.value);
+});
+
   dosageField.value = sched.dosage_amount ?? "";
   instructionsField.value = sched.instructions ?? "";
   backdrop.classList.add("open");
@@ -117,19 +155,35 @@ backdrop.addEventListener("click", (e) => {
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const payload = {
-    user_id: user.user_id,
-    medicine_id: medicineField.value,
-    schedule_time: `${timeField.value}:00`,
-    frequency: frequencyField.value,
-    dosage_amount: dosageField.value.trim(),
-    instructions: instructionsField.value.trim(),
-  };
+const selectedWeeklyDays = Array.from(weeklyDayCheckboxes)
+  .filter((checkbox) => checkbox.checked)
+  .map((checkbox) => checkbox.value);
 
-  if (!payload.medicine_id || !timeField.value) {
-    showToast("Medicine and time are required.", true);
-    return;
-  }
+const payload = {
+  user_id: user.user_id,
+  medicine_id: medicineField.value,
+  schedule_time: `${timeField.value}:00`,
+  frequency: frequencyField.value,
+  weekly_days:
+    frequencyField.value === "weekly"
+      ? selectedWeeklyDays
+      : [],
+  dosage_amount: dosageField.value.trim(),
+  instructions: instructionsField.value.trim(),
+};
+
+if (!payload.medicine_id || !timeField.value) {
+  showToast("Medicine and time are required.", true);
+  return;
+}
+
+if (
+  payload.frequency === "weekly" &&
+  payload.weekly_days.length === 0
+) {
+  showToast("Please select at least one day for a weekly schedule.", true);
+  return;
+}
 
   const saveBtn = document.getElementById("saveScheduleBtn");
   saveBtn.disabled = true;
@@ -176,3 +230,17 @@ async function deleteSchedule(id) {
   await loadMedicinesDropdown();
   await loadSchedules();
 })();
+
+function updateFrequencyFields() {
+  if (frequencyField.value === "weekly") {
+    weeklyDaysField.style.display = "block";
+  } else {
+    weeklyDaysField.style.display = "none";
+
+    weeklyDayCheckboxes.forEach((checkbox) => {
+      checkbox.checked = false;
+    });
+  }
+}
+
+frequencyField.addEventListener("change", updateFrequencyFields);

@@ -14,6 +14,12 @@ async function loadDashboard() {
     document.getElementById("totalMedicines").textContent = "0";
     showToast(err.message, true);
   }
+// Automatically mark overdue doses as missed.
+try {
+  await apiFetch(`/api/compliance/check-missed?user_id=${user.user_id}`);
+} catch (err) {
+  console.error("Missed-dose check failed:", err);
+}
 
   // Today's schedule, joined with today's compliance status.
   try {

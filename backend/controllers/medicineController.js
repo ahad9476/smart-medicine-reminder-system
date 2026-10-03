@@ -38,15 +38,19 @@ const createMedicine = (req, res) => {
 const getMedicines = (req, res) => {
     const { user_id } = req.query;
 
-    let sql = "SELECT * FROM Medicines";
-    let params = [];
-
-    if (user_id) {
-        sql += " WHERE user_id = ?";
-        params.push(user_id);
+    if (!user_id) {
+        return res.status(400).json({
+            message: "user_id is required"
+        });
     }
 
-    db.query(sql, params, (err, results) => {
+    const sql = `
+        SELECT *
+        FROM Medicines
+        WHERE user_id = ?
+    `;
+
+    db.query(sql, [user_id], (err, results) => {
         if (err) {
             console.error("GET MEDICINES ERROR:", err);
 

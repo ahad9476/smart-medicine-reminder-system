@@ -15,7 +15,6 @@
       <li><a href="dashboard.html">Dashboard</a></li>
       <li><a href="medicines.html">Medicines</a></li>
       <li><a href="schedules.html" class="active">Schedules</a></li>
-      <li><a href="reminders.html">Reminders</a></li>
       <li><a href="notifications.html">Notifications</a></li>
       <li><a href="caregivers.html">Caregivers</a></li>
       <li><a href="inventory.html">Inventory</a></li>
@@ -69,13 +68,55 @@
         <input type="time" id="schedTime" required />
       </div>
       <div class="field">
-        <label for="schedFrequency">Frequency</label>
-        <select id="schedFrequency">
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="as needed">As needed</option>
-        </select>
-      </div>
+  <label for="schedFrequency">Frequency</label>
+  <select id="schedFrequency" required>
+    <option value="daily">Daily</option>
+    <option value="weekly">Weekly</option>
+    <option value="as needed">As needed</option>
+  </select>
+</div>
+
+<!-- Weekly options: hidden unless Weekly is selected -->
+<div class="field" id="weeklyDaysField" style="display:none;">
+  <label>Weekly Days</label>
+
+  <div style="display:flex; flex-wrap:wrap; gap:10px;">
+    <label>
+      <input type="checkbox" name="weeklyDay" value="monday">
+      Monday
+    </label>
+
+    <label>
+      <input type="checkbox" name="weeklyDay" value="tuesday">
+      Tuesday
+    </label>
+
+    <label>
+      <input type="checkbox" name="weeklyDay" value="wednesday">
+      Wednesday
+    </label>
+
+    <label>
+      <input type="checkbox" name="weeklyDay" value="thursday">
+      Thursday
+    </label>
+
+    <label>
+      <input type="checkbox" name="weeklyDay" value="friday">
+      Friday
+    </label>
+
+    <label>
+      <input type="checkbox" name="weeklyDay" value="saturday">
+      Saturday
+    </label>
+
+    <label>
+      <input type="checkbox" name="weeklyDay" value="sunday">
+      Sunday
+    </label>
+  </div>
+</div>
       <div class="field">
         <label for="schedDosage">Dosage Amount</label>
         <input type="text" id="schedDosage" placeholder="e.g. 1 tablet" />

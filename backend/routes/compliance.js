@@ -5,6 +5,7 @@ const router = express.Router();
 const {
     createCompliance,
     markDose,
+    checkAndMarkMissedDoses,
     getCompliance
 } = require("../controllers/complianceController");
 
@@ -13,6 +14,9 @@ router.post("/compliance/mark", markDose);
 
 // Manual/advanced insert (e.g. backdating a record).
 router.post("/compliance", createCompliance);
+
+// Automatically marks doses as missed after the 15-minute grace period.
+router.get("/compliance/check-missed", checkAndMarkMissedDoses);
 
 router.get("/compliance", getCompliance);
 

@@ -155,6 +155,86 @@ const markDose = (req, res) => {
     );
 };
 
+// Automatically marks doses as missed when the scheduled time
+// has passed by the configured grace period.
+const checkAndMarkMissedDoses = (req, res) => {
+    const { user_id } = req.query;
+
+    if (!user_id) {
+        return res.status(400).json({
+            message: "user_id is required"
+        });
+    }
+
+    // Grace period: 15 minutes
+    const MISSED_AFTER_MINUTES = 15;
+
+    const sql = `
+        INSERT INTO medication_compliance
+            (
+                schedule_id,
+                user_id,
+                medicine_id,
+                scheduled_date,
+                scheduled_time,
+                status
+            )
+        SELECT
+            s.schedule_id,
+            s.user_id,
+            s.medicine_id,
+            CURDATE(),
+            s.schedule_time,
+            'missed'
+        FROM schedules s
+       WHERE s.user_id = ?
+
+  -- Only fixed schedules can become automatically missed.
+  -- "As needed" medicines are not automatically marked missed.
+  AND (
+        s.frequency = 'daily'
+
+        OR (
+            s.frequency = 'weekly'
+            AND JSON_CONTAINS(
+                s.weekly_days,
+                JSON_QUOTE(LOWER(DAYNAME(CURDATE())))
+            )
+        )
+      )
+
+  AND ADDTIME(
+        s.schedule_time,
+        SEC_TO_TIME(? * 60)
+      ) <= CURTIME()
+          AND NOT EXISTS (
+                SELECT 1
+                FROM medication_compliance mc
+                WHERE mc.schedule_id = s.schedule_id
+                  AND mc.scheduled_date = CURDATE()
+          )
+    `;
+
+    db.query(
+        sql,
+        [user_id, MISSED_AFTER_MINUTES],
+        (err, result) => {
+            if (err) {
+                console.error("CHECK MISSED DOSES ERROR:", err);
+
+                return res.status(500).json({
+                    message: "Failed to check missed doses"
+                });
+            }
+
+            res.status(200).json({
+                message: "Missed doses checked successfully",
+                missed_count: result.affectedRows
+            });
+        }
+    );
+};
+
 // History lookup, e.g. GET /api/compliance?user_id=1&from=2026-09-01&to=2026-09-30
 const getCompliance = (req, res) => {
     const { user_id, from, to } = req.query;
@@ -201,5 +281,6 @@ const getCompliance = (req, res) => {
 module.exports = {
     createCompliance,
     markDose,
+    checkAndMarkMissedDoses,
     getCompliance
 };

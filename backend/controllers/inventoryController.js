@@ -93,72 +93,127 @@ const setInventory = (req, res) => {
 // inserts a "Low Stock" notification (type_id 3) exactly once per low
 // stretch - low_stock_notified is only cleared again once stock is refilled
 // back above the threshold.
+
 const decrementInventoryAndNotify = (medicine_id, user_id, callback) => {
+
     const decrementSql = `
         UPDATE medicine_inventory
         SET quantity = quantity - 1
-        WHERE medicine_id = ? AND quantity > 0
+        WHERE medicine_id = ?
+        AND quantity > 0
     `;
 
-    db.query(decrementSql, [medicine_id], (err) => {
+    db.query(decrementSql, [medicine_id], (err, result) => {
+
         if (err) {
             console.error("DECREMENT INVENTORY ERROR:", err);
             return callback(err);
         }
 
+        if (result.affectedRows === 0) {
+
+            return db.query(
+                "SELECT quantity FROM medicine_inventory WHERE medicine_id = ?",
+                [medicine_id],
+                (readErr, rows) => {
+
+                    if (readErr) {
+                        return callback(readErr);
+                    }
+
+                    if (!rows.length) {
+                        return callback(
+                            new Error("Inventory record not found for medicine_id: " + medicine_id)
+                        );
+                    }
+
+                    return callback(
+                        new Error("Medicine stock is already zero")
+                    );
+                }
+            );
+        }
+
         db.query(
-            "SELECT quantity, low_stock_notified FROM medicine_inventory WHERE medicine_id = ?",
+            `SELECT quantity, low_stock_notified
+             FROM medicine_inventory
+             WHERE medicine_id = ?`,
             [medicine_id],
-            (err, rows) => {
-                if (err) {
-                    console.error("READ INVENTORY ERROR:", err);
-                    return callback(err);
+            (readErr, rows) => {
+
+                if (readErr) {
+                    return callback(readErr);
                 }
 
                 if (!rows.length) {
-                    // No inventory record for this medicine yet - nothing to check.
-                    return callback(null, { quantity: null, notified: false });
+                    return callback(
+                        new Error("Inventory record not found")
+                    );
                 }
 
-                const { quantity, low_stock_notified } = rows[0];
+                const quantity = Number(rows[0].quantity);
+                const lowStockNotified = Number(rows[0].low_stock_notified);
 
                 if (quantity > LOW_STOCK_THRESHOLD) {
-                    if (low_stock_notified) {
-                        // Stock is healthy again (e.g. after a refill) - reset the flag
-                        // so the next low stretch can notify again.
+
+                    if (lowStockNotified) {
                         db.query(
-                            "UPDATE medicine_inventory SET low_stock_notified = 0 WHERE medicine_id = ?",
+                            `UPDATE medicine_inventory
+                             SET low_stock_notified = 0
+                             WHERE medicine_id = ?`,
                             [medicine_id]
                         );
                     }
-                    return callback(null, { quantity, notified: false });
+
+                    return callback(null, {
+                        quantity,
+                        notified: false
+                    });
                 }
 
-                if (low_stock_notified) {
-                    // Already alerted for this low stretch - don't spam on every dose.
-                    return callback(null, { quantity, notified: false });
+                if (lowStockNotified) {
+                    return callback(null, {
+                        quantity,
+                        notified: false
+                    });
                 }
 
-                const message =
-                    quantity <= 0
-                        ? "You are out of stock for this medicine. Please refill soon."
-                        : `Only ${quantity} dose${quantity === 1 ? "" : "s"} left. Time to refill soon.`;
+                const message = quantity <= 0
+                    ? "You are out of stock for this medicine. Please refill soon."
+                    : `Only ${quantity} dose(s) left. Time to refill soon.`;
 
                 db.query(
-                    "INSERT INTO notifications (user_id, type_id, message) VALUES (?, 3, ?)",
+                    `INSERT INTO notifications
+                     (user_id, type_id, message)
+                     VALUES (?, 3, ?)`,
                     [user_id, message],
-                    (err) => {
-                        if (err) {
-                            console.error("LOW STOCK NOTIFICATION ERROR:", err);
-                            return callback(err);
+                    (notificationErr) => {
+
+                        if (notificationErr) {
+                            console.error(
+                                "LOW STOCK NOTIFICATION ERROR:",
+                                notificationErr
+                            );
+
+                            return callback(notificationErr);
                         }
 
                         db.query(
-                            "UPDATE medicine_inventory SET low_stock_notified = 1 WHERE medicine_id = ?",
-                            [medicine_id]
-                        );
+                            `UPDATE medicine_inventory
+                             SET low_stock_notified = 1
+                             WHERE medicine_id = ?`,
+                            [medicine_id],
+                            (flagErr) => {
+                                if (flagErr) {
+                                    return callback(flagErr);
+                                }
 
-                        callback(null, { quantity, notified: true });
+                                callback(null, {
+                                    quantity,
+                                    notified: true
+                                });
+                            }
+                        );
                     }
                 );
             }
