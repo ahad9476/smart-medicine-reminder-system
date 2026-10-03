@@ -1,36 +1,63 @@
 requireAuth();
+
 document.getElementById("logoutBtn").addEventListener("click", logout);
 
 const user = getCurrentUser();
 
 async function loadReminders() {
   const tableBody = document.getElementById("reminderRows");
+
   try {
-    const reminders = await apiFetch(`/api/reminders?user_id=${user.user_id}`);
-    renderTable(reminders);
+    const history = await apiFetch(
+      `/api/compliance?user_id=${user.user_id}`
+    );
+
+    renderTable(history);
   } catch (err) {
-    tableBody.innerHTML = `<tr><td colspan="4" class="empty-state">${err.message}</td></tr>`;
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="empty-state">
+          ${escapeHtml(err.message)}
+        </td>
+      </tr>
+    `;
   }
 }
 
-function renderTable(reminders) {
+function renderTable(history) {
   const tableBody = document.getElementById("reminderRows");
 
-  if (!reminders.length) {
-    tableBody.innerHTML = `<tr><td colspan="4" class="empty-state">No reminders sent yet. They appear automatically once a scheduled dose comes due.</td></tr>`;
+  if (!history.length) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="empty-state">
+          No medication history yet.
+        </td>
+      </tr>
+    `;
     return;
   }
 
-  tableBody.innerHTML = reminders
-    .map(
-      (r) => `
-      <tr>
-        <td>${escapeHtml(r.medicine_name)}</td>
-        <td>${escapeHtml(r.schedule_time)}</td>
-        <td>${escapeHtml(r.reminder_date)}</td>
-        <td><span class="status-tag ok">${escapeHtml(r.status)}</span></td>
-      </tr>`
-    )
+  tableBody.innerHTML = history
+    .map((item) => {
+      const takenAt = item.taken_at
+        ? new Date(item.taken_at).toLocaleString()
+        : "—";
+
+      return `
+        <tr>
+          <td>${escapeHtml(item.medicine_name)}</td>
+          <td>${escapeHtml(item.scheduled_time)}</td>
+          <td>${escapeHtml(item.scheduled_date)}</td>
+          <td>
+            <span class="status-tag ${escapeHtml(item.status)}">
+              ${escapeHtml(item.status)}
+            </span>
+          </td>
+          <td>${escapeHtml(takenAt)}</td>
+        </tr>
+      `;
+    })
     .join("");
 }
 

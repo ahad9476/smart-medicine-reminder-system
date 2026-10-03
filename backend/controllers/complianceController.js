@@ -237,7 +237,7 @@ const checkAndMarkMissedDoses = (req, res) => {
 
 // History lookup, e.g. GET /api/compliance?user_id=1&from=2026-09-01&to=2026-09-30
 const getCompliance = (req, res) => {
-    const { user_id, from, to } = req.query;
+    const { user_id } = req.query;
 
     if (!user_id) {
         return res.status(400).json({
@@ -245,32 +245,32 @@ const getCompliance = (req, res) => {
         });
     }
 
-    let sql = `
-        SELECT mc.*, m.name AS medicine_name
+    const sql = `
+        SELECT
+            mc.compliance_id,
+            mc.schedule_id,
+            mc.medicine_id,
+            m.name AS medicine_name,
+            mc.scheduled_date,
+            mc.scheduled_time,
+            mc.status,
+            mc.taken_at,
+            mc.notes
         FROM medication_compliance mc
-        JOIN medicines m ON m.medicine_id = mc.medicine_id
+        JOIN medicines m
+            ON m.medicine_id = mc.medicine_id
         WHERE mc.user_id = ?
+        ORDER BY
+            mc.scheduled_date DESC,
+            mc.scheduled_time DESC
     `;
-    const params = [user_id];
 
-    if (from) {
-        sql += " AND mc.scheduled_date >= ?";
-        params.push(from);
-    }
-
-    if (to) {
-        sql += " AND mc.scheduled_date <= ?";
-        params.push(to);
-    }
-
-    sql += " ORDER BY mc.scheduled_date DESC, mc.scheduled_time DESC";
-
-    db.query(sql, params, (err, results) => {
+    db.query(sql, [user_id], (err, results) => {
         if (err) {
             console.error("GET COMPLIANCE ERROR:", err);
 
             return res.status(500).json({
-                message: "Failed to fetch compliance history"
+                message: "Failed to fetch medication history"
             });
         }
 
